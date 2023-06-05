@@ -260,7 +260,9 @@ def decode_segmap(image, nc=3):
     rgb = np.stack([r, g, b], axis=2)
     return rgb
 
-def main():
+
+#--------------------------------main code of the Neural Network
+def My_neural_network():
     output_classes = 3
     #dataset and loader
     transformed_dataset_train = MriDataset(image_dir = '/Users/valentinapucci/BIOMEDICAL_COMPUTER_VISION/2d/good_images/images_train/', mask_dir = '/Users/valentinapucci/BIOMEDICAL_COMPUTER_VISION/2d/good_segmentations/segm_train/', 
@@ -329,7 +331,7 @@ for case in range (0, 209):
     print('case: ', case)
     preprocessing(case)
 
-main()
+My_neural_network()
 
 '''
 for i in range (120,255):
