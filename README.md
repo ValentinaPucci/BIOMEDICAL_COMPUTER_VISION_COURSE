@@ -1,0 +1,2 @@
+# BIOMEDICAL_COMPUTER_VISION_COURSE
+Passion in Action polimi 2023
