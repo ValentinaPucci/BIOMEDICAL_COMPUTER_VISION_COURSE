@@ -19,6 +19,88 @@ import glob
 import csv
 
 
+
+
+        
+#------------------------PREPROCESSING CODE---------------------------------------------------------------------------------------   
+
+def preprocessing(case):
+
+#----------------------------------------- loading img e segm
+    string_case = str(case)
+    img = nib.load("/Users/valentinapucci/BIOMEDICAL_COMPUTER_VISION/kits19/data/case_"+string_case.zfill(5)+"/imaging.nii.gz")
+    segm = nib.load("/Users/valentinapucci/BIOMEDICAL_COMPUTER_VISION/kits19/data/case_"+string_case.zfill(5)+"/segmentation.nii.gz")
+
+    mri_img = img.get_fdata()
+    mri_segm = segm.get_fdata()
+
+#------------------------------------------- resizing img
+    print('initial img shape: ', mri_img.shape)
+    target_shape_img = [256, 256, 256]
+    isotr_img = skimage.transform.resize(mri_img, target_shape_img, order=3, cval=0, clip=True, preserve_range=False)
+    isotr_img_shape = isotr_img.shape
+    factors = (
+          target_shape_img[0]/isotr_img_shape[0],
+          target_shape_img[1]/isotr_img_shape[1], 
+          target_shape_img[2]/isotr_img_shape[2]
+          )
+    
+    isotr_reshaped_img = zoom (isotr_img, factors, order=3, mode= 'nearest')
+    reshaped_img_shape = isotr_reshaped_img.shape
+    print ('Final img shape: ', reshaped_img_shape)
+    print (' ')
+
+#------------------------------------------------ resizing segm
+    print('initial segm shape: ', mri_segm.shape)
+    target_shape_segm = [256, 256, 256]
+    isotr_segm = skimage.transform.resize(mri_segm, target_shape_segm, order=0, cval=0, clip=True, preserve_range=False)
+    isotr_segm_shape = isotr_segm.shape
+    factors = (
+          target_shape_segm[0]/isotr_segm_shape[0],
+          target_shape_segm[1]/isotr_segm_shape[1], 
+          target_shape_segm[2]/isotr_segm_shape[2]
+          )
+    
+    isotr_reshaped_segm = zoom (isotr_segm, factors, order=3, mode= 'nearest')
+    reshaped_segm_shape = isotr_reshaped_segm.shape
+    print ('Final segm shape: ', reshaped_segm_shape)
+    print (' ')
+     
+#---------------------------------------------- saving good images 
+    img_norm = (isotr_reshaped_img/255).astype(np.float16)
+    segm_norm = (isotr_reshaped_segm/255).astype(np.float16)
+
+    for i in range (50, 200):
+        j+=1
+        string_j = str(j)
+        path_save_img = "/Users/valentinapucci/BIOMEDICAL_COMPUTER_VISION/2d/good_images/"+string_j+".npy"
+        path_save_segm = "/Users/valentinapucci/BIOMEDICAL_COMPUTER_VISION/2d/good_segmentations/"+string_j+".npy"
+        np.save(path_save_img, img_norm[i,:,:])
+        np.save(path_save_segm, segm_norm[i,:,:])
+        
+    #----------------------------------creation of the new folders for splitting the dataset
+    os.makedirs('good_images/images_train', exist_ok=True)
+    os.makedirs('good_segmentations/segm_train', exist_ok=True)    
+    os.makedirs('good_images/images_val', exist_ok=True)
+    os.makedirs('good_segmentations/segm_val', exist_ok=True)      
+
+    
+    #----------------------------------------------splitting dataset in 2 different folders
+    for i in range (0, 23500):
+        string_i = str(i)
+        shutil.move("/Users/valentinapucci/BIOMEDICAL_COMPUTER_VISION/2d/good_images/"+string_i+".npy", "/Users/valentinapucci/BIOMEDICAL_COMPUTER_VISION/2d/good_images/images_train")
+        shutil.move("/Users/valentinapucci/BIOMEDICAL_COMPUTER_VISION/2d/good_segmentations/"+string_i+".npy", "/Users/valentinapucci/BIOMEDICAL_COMPUTER_VISION/2d/good_segmentations/segm_train")
+
+    for i in range (23500, 31350):
+        string_i = str(i)
+        shutil.move("/Users/valentinapucci/BIOMEDICAL_COMPUTER_VISION/2d/good_images/"+string_i+".npy", "/Users/valentinapucci/BIOMEDICAL_COMPUTER_VISION/2d/good_images/images_val")
+        shutil.move("/Users/valentinapucci/BIOMEDICAL_COMPUTER_VISION/2d/good_segmentations/"+string_i+".npy", "/Users/valentinapucci/BIOMEDICAL_COMPUTER_VISION/2d/good_segmentations/segm_val")
+
+        
+        
+        
+#------------------------NEURAL NETWORK CODE---------------------------------------------------------------------------------------     
+        
 #-----------------------------------Helper function to controll overlap
 def image_viewer(output_classes, image, mask):
     x=mask[0].numpy()
@@ -323,7 +405,7 @@ def My_neural_network():
     
     
     
-
+#-----------------------------------------------MAIN()------------------------------------------------------------------------------------
 
 for case in range (0, 209):
     #if (case != 19 & case != 72 & case != 96 & case != 182):   
